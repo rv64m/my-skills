@@ -1,0 +1,106 @@
+# Self-Consistency
+
+## What It Is
+
+Self-consistency, proposed by Wang et al. (2022), replaces the greedy decoding used in standard chain-of-thought prompting with a **sample-then-vote** approach:
+
+1. Sample **multiple independent reasoning paths** from the model (using temperature > 0)
+2. Let each path arrive at its own answer
+3. **Take the majority answer** across all paths as the final output
+
+The intuition: complex reasoning problems often have multiple valid ways to reach the correct answer. Greedy decoding picks the single most likely next token at each step, which can get locked into an error early. Sampling diverse paths and voting corrects for this — wrong reasoning paths tend to disagree with each other, while correct ones converge.
+
+**Example — greedy CoT fails:**
+```
+Q: When I was 6 my sister was half my age. Now I'm 70 how old is my sister?
+A: 35   ← wrong
+```
+
+**With self-consistency (3 sampled paths):**
+- Path 1: "She was 3 when I was 6. Now I'm 70, so she's 70 - 3 = 67. The answer is 67."
+- Path 2: "Sister was half of 6 = 3. Now 70 - 3 = 67. The answer is 67."
+- Path 3: "She was 3. Now 70/2 = 35. The answer is 35."
+
+Majority vote → **67** ✓
+
+---
+
+## When to Use Self-Consistency
+
+Self-consistency is a **performance booster for CoT**, not a standalone technique. Use it when:
+
+- CoT prompting is already set up but accuracy is still insufficient
+- The task involves **arithmetic, multi-step logic, or commonsense reasoning** where errors are easy to make
+- You can afford **multiple API calls** (typically 5–40 samples per query)
+- Reliability matters more than latency or cost
+
+**Not useful for:**
+- Tasks with a single deterministic correct path (self-consistency adds no signal)
+- Simple classification or format-matching (standard few-shot is enough)
+- Latency-sensitive applications (multiple calls add delay)
+- Open-ended generation where there's no majority answer to extract
+
+---
+
+## How to Implement
+
+### Step 1: Set up a standard few-shot CoT prompt
+Self-consistency requires CoT examples — the reasoning chains are what produces diverse paths. See `technique_chain_of_thought.md` for how to write them.
+
+### Step 2: Sample with temperature
+Set temperature > 0 (typically 0.5–0.8) to get diverse outputs. Greedy/temperature=0 produces identical outputs on every call, defeating the purpose.
+
+```python
+# Example: 10 samples
+responses = [
+    llm(prompt, temperature=0.7)
+    for _ in range(10)
+]
+```
+
+### Step 3: Extract the final answer from each response
+Parse the answer from each response (e.g., the number after "The answer is").
+
+### Step 4: Majority vote
+Count answer occurrences. The most frequent answer is the self-consistency output.
+
+```python
+from collections import Counter
+
+answers = [extract_answer(r) for r in responses]
+final_answer = Counter(answers).most_common(1)[0][0]
+```
+
+### How many samples?
+The original paper found strong gains with as few as **5–10 samples**, with diminishing returns beyond 20–40. Start with 10 and tune based on task difficulty and cost tolerance.
+
+---
+
+## Prompt Design Considerations
+
+Self-consistency doesn't require a special prompt format — use a standard few-shot CoT prompt. A few things help:
+
+**Use diverse, high-quality CoT examples.** The examples themselves influence the range of reasoning strategies the model tries. If all examples use the same approach, the sampled paths will be less diverse.
+
+**Temperature tuning.** Too low (< 0.3) → paths are too similar, less benefit. Too high (> 1.0) → paths become incoherent. 0.5–0.8 is a good starting range.
+
+**Consistent answer format in examples.** The extraction step (Step 3) is easier when answers are in a predictable location, e.g., always ending with "The answer is X." Make this explicit in your CoT examples.
+
+---
+
+## Relationship to Other Techniques
+
+| Technique | Calls | Decoding | Best for |
+|---|---|---|---|
+| Zero-shot | 1 | Greedy | Simple tasks |
+| Few-shot CoT | 1 | Greedy | Reasoning, good accuracy needed |
+| **Self-consistency** | **N (5–40)** | **Sampled** | **High-accuracy reasoning** |
+| Self-consistency + Auto-CoT | N | Sampled | Pipeline scale, no hand-crafted examples |
+
+Self-consistency sits on top of CoT — it's a decoding strategy, not a prompting structure change. You can layer it on any CoT setup.
+
+---
+
+## Key Research Reference
+
+- **Wang et al. (2022)** — "Self-Consistency Improves Chain of Thought Reasoning in Language Models." arXiv:2203.11171

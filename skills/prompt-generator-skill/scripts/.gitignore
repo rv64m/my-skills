@@ -1,0 +1,5 @@
+.venv/
+.env
+*.jsonl
+prompt.txt
+__pycache__/

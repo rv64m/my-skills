@@ -1,0 +1,23 @@
+{
+  "name": "my-skills-local",
+  "owner": {
+    "name": "a1"
+  },
+  "description": "Local marketplace for the My Skills plugin.",
+  "plugins": [
+    {
+      "name": "my-skills",
+      "source": "./plugins/my-skills",
+      "description": "A local collection of reusable skills for Codex and Claude Code.",
+      "version": "0.1.0",
+      "author": {
+        "name": "a1"
+      },
+      "category": "Productivity",
+      "tags": [
+        "skills",
+        "workflow"
+      ]
+    }
+  ]
+}

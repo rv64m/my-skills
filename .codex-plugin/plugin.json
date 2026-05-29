@@ -1,0 +1,31 @@
+{
+  "name": "my-skills",
+  "version": "0.1.0",
+  "description": "A local collection of reusable skills for Codex and Claude Code.",
+  "author": {
+    "name": "a1"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "skills",
+    "codex",
+    "claude-code",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "My Skills",
+    "shortDescription": "Local reusable skills for coding agents",
+    "longDescription": "My Skills is a local plugin scaffold for collecting reusable skills and installing them into Codex or Claude Code.",
+    "developerName": "a1",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use my local skills for this task.",
+      "Help me add a new reusable skill."
+    ]
+  }
+}
