@@ -59,6 +59,12 @@ for you).
 After Stage 1 produces a transcript/structured text, continue to Stage 2 note synthesis
 *(added in a later step)*.
 
+### Domain-specific note references
+
+| Source/topic signals | Reference | Use timing |
+|---|---|---|
+| Trading, investing, market structure, technical analysis, quantitative trading, backtesting, risk management, trading psychology, or trade review | `references/trader.md` | Read before Stage 2 synthesis |
+
 ## Stage 1a — Video / Audio → transcript
 
 All work goes through `scripts/extract_transcript.py`. It handles dependency checks, GPU
