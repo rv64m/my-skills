@@ -64,6 +64,10 @@ After Stage 1 produces a transcript/structured text, continue to Stage 2 note sy
 | Source/topic signals | Reference | Use timing |
 |---|---|---|
 | Trading, investing, market structure, technical analysis, quantitative trading, backtesting, risk management, trading psychology, or trade review | `references/trader.md` | Read before Stage 2 synthesis |
+| Mathematics for algorithms or AI, linear algebra, probability, statistics, calculus, optimization, information theory, discrete math, machine-learning theory, or math-heavy papers/courses | `references/math.md` | Read before Stage 2 synthesis and before optional Stage 3 visualization |
+
+If more than one domain reference applies, read each relevant reference and combine their
+guidance. For example, quantitative-trading notes can use both `trader.md` and `math.md`.
 
 ## Stage 1a — Video / Audio → transcript
 
@@ -235,8 +239,9 @@ Two rules of thumb:
 python3 scripts/render_visual.py check
 ```
 
-Reports whether `matplotlib`, `numpy`, the Python `graphviz` binding, the Graphviz `dot`
-binary, the Mermaid CLI (`mmdc`), Node, and LaTeX are present.
+Reports whether `matplotlib`, `numpy`, the Python `graphviz` binding, optional math helpers
+(`scipy`, `sympy`, `pandas`), the Graphviz `dot` binary, the Mermaid CLI (`mmdc`), Node, and
+LaTeX are present.
 
 ### Installing (ask the user first)
 
@@ -244,6 +249,9 @@ The Python deps are light — no model downloads:
 
 ```bash
 python3 scripts/render_visual.py install     # pip install -U matplotlib numpy graphviz
+# optional math helpers, only when useful:
+python3 scripts/render_visual.py install --with-math
+python3 scripts/render_visual.py install --optional scipy sympy pandas
 ```
 
 The two non-pip tools are installed separately, only when you actually need them:
@@ -256,7 +264,9 @@ The two non-pip tools are installed separately, only when you actually need them
 ### Data & function plots — `mpl`
 
 You write the Matplotlib code; the script runs it headlessly and saves the current figure.
-`plt` (pyplot), `np` (numpy), and `math` are pre-imported — the snippet just draws.
+`plt` (pyplot), `np` / `numpy`, and `math` are pre-imported. If installed, optional helpers
+are also preloaded: `scipy`, `stats`, `optimize`, `linalg`, `special`, `sympy` / `sy`, and
+`pandas` / `pd`. The snippet should stay focused on drawing or a small numerical experiment.
 
 ```bash
 echo 'plt.plot([0,1,2,3],[0,1,4,9],marker="o"); plt.title(r"$y = x^2$"); plt.grid(True)' \

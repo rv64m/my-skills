@@ -8,9 +8,10 @@ field is a paste-ready snippet for the notes (an `![](...)` image link, or a fen
 Subcommands
 -----------
   check                     Report which renderers are available (matplotlib / numpy /
-                            graphviz / dot / mermaid-cli / node / latex).
+                            graphviz / dot / mermaid-cli / node / latex) plus optional
+                            math helpers (scipy / sympy / pandas).
   install                   pip install -U the light Python deps (matplotlib numpy graphviz);
-                            print hints for the non-pip tools (system Graphviz, Mermaid CLI).
+                            add --with-math or --optional for math helpers.
   mpl      <src.py|->       Run agent-written Matplotlib code; save the current figure.
   dot      <src.dot|->      Render Graphviz DOT (trees / graphs / state machines / flowcharts).
   mermaid  <src.mmd|->      Embed a Mermaid diagram as text (default) or render it via mmdc.
@@ -31,6 +32,7 @@ plus a fenced block for Mermaid embed mode.
 from __future__ import annotations
 
 import argparse
+import importlib
 import importlib.util
 import json
 import shutil
@@ -39,6 +41,11 @@ import sys
 from pathlib import Path
 
 PIP_DEPS = ["matplotlib", "numpy", "graphviz"]
+OPTIONAL_PIP_DEPS = {
+    "scipy": "scipy",
+    "sympy": "sympy",
+    "pandas": "pandas",
+}
 
 # Non-pip tools: detected but never auto-installed — we print these hints instead.
 SYSTEM_HINTS = {
@@ -71,11 +78,22 @@ def module_available(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
 
+def try_import_module(name: str):
+    """Import an optional module if it is fully usable, not just discoverable."""
+    try:
+        return importlib.import_module(name)
+    except Exception:
+        return None
+
+
 def environment_report() -> dict:
     return {
         "matplotlib": module_available("matplotlib"),
         "numpy": module_available("numpy"),
         "graphviz_py": module_available("graphviz"),
+        "scipy": module_available("scipy"),
+        "sympy": module_available("sympy"),
+        "pandas": module_available("pandas"),
         "graphviz_dot": have_cmd("dot"),
         "mermaid_cli": have_cmd("mmdc"),
         "node": have_cmd("node"),
@@ -179,14 +197,59 @@ def cmd_check(_args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_install(_args: argparse.Namespace) -> int:
-    run([sys.executable, "-m", "pip", "install", "-U", *PIP_DEPS])
+def cmd_install(args: argparse.Namespace) -> int:
+    deps = [*PIP_DEPS]
+    selected_optional = set(args.optional or [])
+    if args.with_math:
+        selected_optional.update(OPTIONAL_PIP_DEPS)
+    deps.extend(OPTIONAL_PIP_DEPS[name] for name in sorted(selected_optional))
+
+    run([sys.executable, "-m", "pip", "install", "-U", *deps])
     report = environment_report()
     for key, hint in SYSTEM_HINTS.items():
         if not report[key]:
             print(f"note: {key} still unavailable — {hint}", file=sys.stderr)
+    missing_optional = [name for name in OPTIONAL_PIP_DEPS if not report[name]]
+    if missing_optional:
+        print(
+            "note: optional math helpers unavailable — "
+            + ", ".join(missing_optional)
+            + ". Install selected helpers with `python3 scripts/render_visual.py install --optional "
+            + " ".join(missing_optional)
+            + "` or all of them with `--with-math`.",
+            file=sys.stderr,
+        )
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0
+
+
+def preload_scientific_namespace(namespace: dict) -> list[str]:
+    """Expose installed scientific helpers to mpl snippets without making them required."""
+    preloaded = sorted(namespace)
+
+    scipy_mod = try_import_module("scipy")
+    if scipy_mod is not None:
+        namespace["scipy"] = scipy_mod
+        preloaded.append("scipy")
+        for submodule in ("stats", "optimize", "linalg", "special"):
+            module = try_import_module(f"scipy.{submodule}")
+            if module is not None:
+                namespace[submodule] = module
+                preloaded.append(submodule)
+
+    sympy_mod = try_import_module("sympy")
+    if sympy_mod is not None:
+        namespace["sympy"] = sympy_mod
+        namespace["sy"] = sympy_mod
+        preloaded.extend(["sympy", "sy"])
+
+    pandas_mod = try_import_module("pandas")
+    if pandas_mod is not None:
+        namespace["pandas"] = pandas_mod
+        namespace["pd"] = pandas_mod
+        preloaded.extend(["pandas", "pd"])
+
+    return sorted(set(preloaded))
 
 
 def cmd_mpl(args: argparse.Namespace) -> int:
@@ -206,13 +269,14 @@ def cmd_mpl(args: argparse.Namespace) -> int:
 
     configure_matplotlib(plt)
 
-    # Contract: the snippet just draws using `plt`/`np`/`math`; we save the current figure.
+    # Contract: the snippet draws using preloaded scientific helpers; we save the current figure.
     namespace: dict = {"plt": plt, "math": __import__("math")}
     if module_available("numpy"):
         import numpy as np
 
         namespace["np"] = np
         namespace["numpy"] = np
+    preloaded = preload_scientific_namespace(namespace)
     try:
         exec(compile(src, "<mpl-snippet>", "exec"), namespace)
     except Exception as exc:  # surface a clean error, not a traceback dump
@@ -221,7 +285,7 @@ def cmd_mpl(args: argparse.Namespace) -> int:
     require(bool(plt.get_fignums()), "snippet produced no figure (did you call plt.plot/bar/...?).")
     plt.savefig(target, **savefig_kwargs(args.format))
     plt.close("all")
-    return emit(out, target, args.format)
+    return emit(out, target, args.format, extra={"preloaded": preloaded})
 
 
 def cmd_dot(args: argparse.Namespace) -> int:
@@ -306,7 +370,22 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("check", help="Report renderer availability.").set_defaults(func=cmd_check)
-    sub.add_parser("install", help="pip install -U matplotlib numpy graphviz.").set_defaults(func=cmd_install)
+    p_install = sub.add_parser(
+        "install",
+        help="pip install -U matplotlib numpy graphviz; optionally scipy/sympy/pandas.",
+    )
+    p_install.add_argument(
+        "--with-math",
+        action="store_true",
+        help="Also install optional math helpers: scipy sympy pandas.",
+    )
+    p_install.add_argument(
+        "--optional",
+        nargs="+",
+        choices=sorted(OPTIONAL_PIP_DEPS),
+        help="Install selected optional math helpers.",
+    )
+    p_install.set_defaults(func=cmd_install)
 
     p_mpl = sub.add_parser("mpl", help="Render agent-written Matplotlib code to an image.")
     p_mpl.add_argument("source", help="Path to a .py snippet, or '-' for stdin.")
