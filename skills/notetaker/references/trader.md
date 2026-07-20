@@ -4,10 +4,6 @@ Use this reference when note synthesis is based on trading, investing, market
 structure, technical analysis, quantitative trading, backtesting, risk
 management, or trading psychology material.
 
-The goal is to produce learning notes, not trading advice. Never present a
-setup, pattern, strategy, indicator, or backtest as a recommendation to buy,
-sell, short, leverage, or allocate capital.
-
 ## Core Principles
 
 - Separate **source facts**, **author claims**, **assistant inference**, and
@@ -20,62 +16,19 @@ sell, short, leverage, or allocate capital.
   formula would make the idea easier to learn.
 - Label every chart as one of: `source data`, `reconstructed from source`,
   `synthetic teaching example`, or `conceptual diagram`.
-- Do not imply profitability from a chart pattern alone. Always include risk,
-  invalidation, sample-size, and regime caveats.
 
-## Classify the Source First
+## Adapt Notes to the Source
 
-Before writing the notes, classify the material. More than one class can apply.
+Before writing, identify the source's main concepts, evidence, assumptions,
+and learning needs. Use the relevant guidance below without requiring the
+material to fit a predefined category. Topics may overlap, and the examples
+in this reference are not exhaustive.
 
-| Class | Signals in source | Notes emphasis | Visual priority |
-|---|---|---|---|
-| Technical analysis / price action | candles, trendlines, support/resistance, breakout, reversal, volume, patterns | setup anatomy, context, confirmation, invalidation | candlestick diagram, annotated levels, pattern variants |
-| Systematic / quantitative trading | rules, indicators, signals, backtest, optimization, factor, portfolio | rule definition, data assumptions, evaluation, overfit risk | signal flow, equity curve, drawdown, distribution |
-| Risk management / position sizing | stop loss, R multiple, volatility, Kelly, risk per trade, exposure | loss control, sizing formula, scenario table | risk/reward diagram, position-size table, drawdown path |
-| Trading psychology / process | discipline, FOMO, revenge trading, checklist, journal, mistakes | behavior loop, trigger, countermeasure, review process | decision tree, bias map, review checklist |
-| Market microstructure / execution | order book, spread, liquidity, slippage, order types, auction | mechanism, participants, execution tradeoffs | order-book diagram, spread/slippage chart |
-| Trade review / case study | entry, exit, stop, PnL, screenshots, journal | what was planned, what happened, what changed | annotated trade chart, timeline, mistake table |
-
-If classification is uncertain, say so briefly and use the general note
-structure plus a conservative set of visuals.
-
-## Required Note Structure
-
-Use this skeleton for final Markdown notes. Omit only sections that are truly
-not supported by the source.
-
-```markdown
-# <topic>
-
-## 一句话摘要
-<the core learning point, not a trade recommendation>
-
-## 材料类型与适用边界
-- 类型: <technical / quantitative / risk / psychology / microstructure / review>
-- 市场/品种: <if stated>
-- 周期/频率: <if stated>
-- 数据来源: <if stated>
-- 适用前提: <conditions>
-- 失效条件: <conditions>
-
-## 核心概念
-<definitions, mechanisms, formulas, and source claims>
-
-## 图表与示意
-<embed generated charts, diagrams, formulas, and tables>
-
-## 交易规则或判断流程
-<entry, exit, stop, sizing, filters, and decision tree when present>
-
-## 风险、反例与常见误读
-<risk, invalidation, false positives, overfit, psychology traps>
-
-## 可复盘问题
-<questions for future review>
-
-## 待验证假设
-<claims that require data, backtest, or live review>
-```
+Choose note emphasis and visuals from the source itself—for example, explain
+rule mechanics for a strategy, execution tradeoffs for order-flow material,
+or behavioral interventions for trading-process material. When the appropriate
+emphasis is uncertain, use the general principles and only add visuals that
+clarify a specific concept.
 
 ## Visual Enrichment Rules
 
@@ -93,10 +46,6 @@ Good visuals include:
 - Signal-generation flowcharts and trade-management decision trees.
 - Timeline charts for case studies and trade reviews.
 - Tables contrasting valid setup, weak setup, false breakout, and failed setup.
-
-Do not create decorative charts. Every figure must teach one specific concept.
-If the source lacks enough data for a precise chart, make a schematic and label
-it as such.
 
 ## Candlestick Chart Rules
 
@@ -315,18 +264,3 @@ When the material contains strong claims, add a verification note:
 - What market regime was covered?
 - Were costs, slippage, liquidity, and survivorship considered?
 - Could the rule be overfit?
-
-## Final Output Checklist
-
-Before finishing trading notes, verify:
-
-- The notes are educational and do not provide personalized financial advice.
-- The source type and applicable market/timeframe are stated or marked unknown.
-- Claims, facts, assumptions, and assistant inferences are separated.
-- Every chart has a purpose, label, and caption.
-- Synthetic candlestick charts are explicitly labeled as not market data.
-- Technical patterns include context, confirmation, and invalidation.
-- Strategy notes include rules, costs, sample size, and overfit caveats.
-- Risk notes include position sizing, stop logic, and loss scenarios.
-- Psychology notes include observable behavior and practical countermeasures.
-- The final section lists open questions or hypotheses to validate.
