@@ -1,11 +1,12 @@
 {
   "name": "my-skills",
   "description": "A local collection of reusable skills for Codex and Claude Code.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "a1"
   },
   "license": "UNLICENSED",
+  "skills": "./skills/",
   "keywords": [
     "skills",
     "codex",
